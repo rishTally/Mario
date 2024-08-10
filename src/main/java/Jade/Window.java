@@ -5,6 +5,7 @@ import org.lwjgl.glfw.GLFWAllocateCallback;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryUtil;
+import util.Time;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -15,8 +16,10 @@ public class Window {
     private int width, height;
     private String title;
     private long glfwWindow;
-    private float r,g,b,a;
+    public float r,g,b,a;
     private boolean fadeToBlack = false;
+
+    private static Scene currentScene;
 
     private static Window window = null;
 
@@ -28,6 +31,21 @@ public class Window {
         this.g = 1;
         this.b = 1;
         this.a = 1;
+    }
+
+    public static void changeScene(int newScene){
+        switch (newScene){
+            case 0:
+                currentScene = new LevelEditorScene();
+//                currentScene.inti();
+                break;
+            case 1:
+                currentScene = new LevelScene();
+                break;
+            default:
+                assert false: "Unknown Scene '" + newScene + "'";
+                break;
+        }
     }
 
     public static Window get() {
@@ -93,26 +111,29 @@ public class Window {
         // bindings available for use.
         GL.createCapabilities();
 
+        Window.changeScene(0);
+
     }
 
     public void loop() {
-        int a1 = 1;
+        float beginTime = Time.getTime();
+        float endTime ;
+        float dt = -1.0f;
+
         while ( !glfwWindowShouldClose(glfwWindow) ) {
             // Poll for window events. The key callback above will only be
             // invoked during this call.
             glfwPollEvents();
 
             glClearColor(r,g,b,a);
-            glClear(GL_COLOR_BUFFER_BIT); // clear the framebuffer
-            if (fadeToBlack){
-                r = Math.max(r - (a1 * 0.01f),0);
-                g = Math.max(g - (a1 * 0.01f),0);
-                b = Math.max(b - (a1 * 0.01f),0);
-            }
-            if(KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
-                fadeToBlack = true;
+            glClear(GL_COLOR_BUFFER_BIT); // clear the Frame buffer
+            if(dt >= 0){
+                currentScene.update(dt);
             }
             glfwSwapBuffers(glfwWindow);
+            endTime = Time.getTime();
+            dt = endTime - beginTime;
+            beginTime = endTime;
         }
     }
 
